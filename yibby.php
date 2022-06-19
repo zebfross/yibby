@@ -24,15 +24,15 @@ class Yibby {
         return $default;
     }
 
-    public function render_template($file, $data=[], $return = false) {
-        return $this->render_file("templates/" . $file, $data, $return);
+    public static function render_template($file, $data=[], $return = false) {
+        return self::render_file("templates/" . $file, $data, $return);
     }
 
-    public function render_view($file, $data=[], $return=false) {
-        return $this->render_file("views/" . $file, $data, $return);
+    public static function render_view($file, $data=[], $return=false) {
+        return self::render_file("views/" . $file, $data, $return);
     }
 
-    private function render_file($file, $data = [], $return = false)
+    private static function render_file($file, $data = [], $return = false)
     {
         if (!is_array($data))
             $data = (array)$data;
@@ -40,8 +40,9 @@ class Yibby {
         extract($data);
 
         ob_start();
-        $theme = $file . ".php";
-        include($theme); // PHP will be processed
+        $path = 'templates/' . $file;
+        //if (file_exists($path))
+            include($path); // PHP will be processed
         $output = ob_get_contents();
         @ob_end_clean();
         if ($return)
@@ -97,15 +98,125 @@ class Yibby {
             return wp_validate_auth_cookie($_GET['app_token'], 'logged_in');
         });
     }
+    
+    private static function friendlyName($name) {
+        return ucwords(str_replace("-", " ", $name));
+    }
 
-    public static function generate_app() {
+    private static function upperCaseName($name) {
+        return str_replace(" ", "", self::friendlyName($name));
+    }
+
+    private static function writeFile($inpath, $data, $outpath, $suffix, $overwrite=false) {
+        if (!$overwrite && file_exists($outpath . $suffix))
+            return;
+        $output = self::render_file($inpath . $suffix, $data, true);
+        mkdir(dirname($outpath), 0755, true);
+        file_put_contents($outpath . $suffix, $output);
+    }
+
+    /**
+     * @param $name
+     * @param $form \CMB2
+     */
+    public static function generate_page($template, $name, $form, $path) {
+        $inpath = 'pages/' . $template;
+        $outpath = path_join($path, 'pages/' . $name . '/' . $name);
+        $componentIn = 'pages/component/' . $template;
+        $componentOut = path_join($path, 'pages/' . $name . '/form/' . $name);
+        $data = [
+            'name' => $name,
+            'upperName' => self::upperCaseName($name),
+            'friendlyName' => self::friendlyName($name)
+        ];
+        // generate page
+        self::writeFile($inpath, $data, $outpath, '.module.ts');
+        self::writeFile($inpath, $data, $outpath, '.page.html');
+        self::writeFile($inpath, $data, $outpath, '.page.scss');
+        self::writeFile($inpath, $data, $outpath, '.page.spec.ts');
+        self::writeFile($inpath, $data, $outpath, '.page.ts');
+        self::writeFile($inpath, $data, $outpath, '-routing.module.ts');
+
+        // generate component
+        self::writeFile($componentIn, $data, $componentOut, '.component.html', true);
+        self::writeFile($componentIn, $data, $componentOut, '.component.scss');
+        self::writeFile($componentIn, $data, $componentOut, '.component.spec.ts');
+        self::writeFile($componentIn, $data, $componentOut, '.component.ts');
+
+        echo "{
+    path: '$name',
+    loadChildren: () => import('./pages/$name/$name.module').then( m => m.{$data['upperName']}PageModule)
+  },
+  ";
+    }
+
+    public static function generate_service($template, $name, $path) {
+        $pathrel = 'services/' . $name . '.service.';
+        $inpath = 'services/' . $template . '.service.';
+        $outpath = path_join($path, $pathrel);
+        $data = ['name' => $name, 'upperName' => self::upperCaseName($name)];
+        self::writeFile($inpath, $data, $outpath, 'ts');
+        self::writeFile($inpath, $data, $outpath, 'spec.ts');
+    }
+
+    /**
+     * @param $prop \ReflectionProperty
+     * @return array
+     */
+    private static function toTsType($prop) {
+
+        $data = [
+            'type' => ($prop->hasType() ? $prop->getType()->getName() : "string"),
+            'default' => $prop->getDefaultValue()
+        ];
+
+        if ($data['type'] == 'string') {
+            $data['default'] = "''";
+        }
+
+        return $data;
+    }
+
+    public static function generate_model($path, $model) {
+        $data = [
+            'name' => '',
+            'upperName' => '',
+            'object' => $model,
+            'props' => []
+        ];
+
+        try {
+            $reflect = new \ReflectionClass($model);
+            $data['upperName'] = basename($reflect->getName());
+            $data['name'] = strtolower($data['upperName']);
+        } catch (ReflectionException $e) {
+            return;
+        }
+
+        foreach($model as $key => $value) {
+            try {
+                $prop = new \ReflectionProperty($model, $key);
+                if (!$prop->isStatic())
+                    $data['props'][$prop->getName()] = self::toTsType($prop);
+            } catch (ReflectionException $e) {
+
+            }
+        }
+
+        $inpath = 'models/model';
+        $outpath = path_join($path, 'models/' . $data['name']);
+        self::writeFile($inpath, $data, $outpath, '.ts');
+    }
+
+    public static function generate_app($path) {
 
         $boxes = \CMB2_Boxes::get_all();
 
+        self::generate_service('general', 'wordpress', $path);
+
         foreach($boxes as $box) {
             if (!str_starts_with($box->cmb_id, 'admin-')) {
-
-                echo $box->cmb_id . PHP_EOL;
+                self::generate_page('page', $box->cmb_id, $box->cmb_id, $path);
             }
         }
     }
