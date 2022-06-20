@@ -1,7 +1,7 @@
 
 export class <?= $upperName ?> {
 
-    <?php foreach($props as $prop => $type): ?><?= $prop ?>: <?= $type['type'] ?>;
+    <?php foreach($props as $prop => $type): ?><?= $prop ?>: <?= $type['type'] ?> = <?= $type['default'] ?>;
     <?php endforeach; ?>
 
     static from(data){
@@ -10,10 +10,5 @@ export class <?= $upperName ?> {
         return ret
     }
 
-    constructor() {
-
-    <?php foreach($props as $prop => $type): ?>
-    this.<?= $prop ?> = <?= $type['default'] ?>;
-    <?php endforeach; ?>
-}
+    constructor() {}
 }

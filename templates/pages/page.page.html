@@ -5,5 +5,9 @@
 </ion-header>
 
 <ion-content>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <?= $fields ?>
 
+    <ion-button type="submit">Save</ion-button>
+  </form>
 </ion-content>

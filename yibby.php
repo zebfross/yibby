@@ -11,7 +11,10 @@ License: GPL2
 License URI: https://opensource.org/licenses/gpl-2.0.php
 */
 
+
 namespace Yibby;
+
+require_once __DIR__ . "/FieldTemplates.php";
 
 class Yibby {
 
@@ -98,6 +101,10 @@ class Yibby {
             return wp_validate_auth_cookie($_GET['app_token'], 'logged_in');
         });
     }
+
+    private static function error_log($message) {
+        echo "ERROR: " . $message;
+    }
     
     private static function friendlyName($name) {
         return ucwords(str_replace("-", " ", $name));
@@ -115,33 +122,51 @@ class Yibby {
         file_put_contents($outpath . $suffix, $output);
     }
 
+    public static function get_field_display($field) {
+
+        $display = apply_filters('yibby_cmb2_field_display_' . $field['type'], '', $field);
+        if (empty($display)) {
+            self::error_log("Unknown field type for " . print_r($field, true));
+        }
+
+        return $display;
+    }
+
     /**
-     * @param $name
+     * @param $template
      * @param $form \CMB2
+     * @param $path
      */
-    public static function generate_page($template, $name, $form, $path) {
+    public static function generate_page($template, $form, $path) {
+        $name = $form->cmb_id;
         $inpath = 'pages/' . $template;
         $outpath = path_join($path, 'pages/' . $name . '/' . $name);
         $componentIn = 'pages/component/' . $template;
         $componentOut = path_join($path, 'pages/' . $name . '/form/' . $name);
+
         $data = [
             'name' => $name,
             'upperName' => self::upperCaseName($name),
-            'friendlyName' => self::friendlyName($name)
+            'friendlyName' => self::friendlyName($name),
+            'fields' => ""
         ];
+
+        foreach($form->prop('fields') as $field) {
+            //$field = $form->get_field($field_arr);
+            //$type = $field->type();
+
+
+            $data['fields'] .= self::get_field_display($field);
+
+        }
+
         // generate page
         self::writeFile($inpath, $data, $outpath, '.module.ts');
-        self::writeFile($inpath, $data, $outpath, '.page.html');
+        self::writeFile($inpath, $data, $outpath, '.page.html', true);
         self::writeFile($inpath, $data, $outpath, '.page.scss');
         self::writeFile($inpath, $data, $outpath, '.page.spec.ts');
         self::writeFile($inpath, $data, $outpath, '.page.ts');
         self::writeFile($inpath, $data, $outpath, '-routing.module.ts');
-
-        // generate component
-        self::writeFile($componentIn, $data, $componentOut, '.component.html', true);
-        self::writeFile($componentIn, $data, $componentOut, '.component.scss');
-        self::writeFile($componentIn, $data, $componentOut, '.component.spec.ts');
-        self::writeFile($componentIn, $data, $componentOut, '.component.ts');
 
         echo "{
     path: '$name',
@@ -209,6 +234,7 @@ class Yibby {
     }
 
     public static function generate_app($path) {
+        new FieldTemplates();
 
         $boxes = \CMB2_Boxes::get_all();
 
@@ -216,7 +242,7 @@ class Yibby {
 
         foreach($boxes as $box) {
             if (!str_starts_with($box->cmb_id, 'admin-')) {
-                self::generate_page('page', $box->cmb_id, $box->cmb_id, $path);
+                self::generate_page('page', $box, $path);
             }
         }
     }
