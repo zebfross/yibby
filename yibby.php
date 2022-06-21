@@ -152,12 +152,7 @@ class Yibby {
         ];
 
         foreach($form->prop('fields') as $field) {
-            //$field = $form->get_field($field_arr);
-            //$type = $field->type();
-
-
             $data['fields'] .= self::get_field_display($field);
-
         }
 
         // generate page
