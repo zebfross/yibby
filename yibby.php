@@ -152,6 +152,8 @@ class Yibby {
         ];
 
         foreach($form->prop('fields') as $field) {
+            if (str_contains($field['id'], '-'))
+                self::error_log("invalid field name!!! " . $field['id']);
             $data['fields'] .= self::get_field_display($field);
         }
 

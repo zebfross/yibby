@@ -16,7 +16,7 @@ class FieldTemplates
         $this->add_label_wrapped_field_filter($prefix . 'pw_multiselect', 'render_select');
         $this->add_label_wrapped_field_filter($prefix . 'pw_select', 'render_select');
         $this->add_label_wrapped_field_filter($prefix . 'title', 'render_title');
-        $this->add_label_wrapped_field_filter($prefix . 'checkbox', 'render_checkbox');
+        add_filter($prefix . 'checkbox', [$this, 'render_checkbox'], 10, 2);
         add_filter($prefix . "group", [$this, 'render_group'], 10, 2);
         add_filter($prefix . "hidden", [$this, 'render_hidden'], 10, 2);
         add_filter($prefix . "html", [$this, 'render_html'], 10, 2);
@@ -75,11 +75,11 @@ class FieldTemplates
     }
 
     public function render_group($content, $field) {
-        $display = "";
+        $display = "<md-input-container formGroupName='{$field['id']}'>";
         foreach($field['fields'] as $subfield) {
             $display .= Yibby::get_field_display($subfield);
         }
-
+        $display .= '</md-input-container>';
         return $display;
     }
 
@@ -88,7 +88,6 @@ class FieldTemplates
         $options = "";
         $props = [
             'interface' => 'action-sheet',
-            '[value]' => $field['name'],
             'okText' => 'Select',
             'cancelText' => 'Close',
         ];
@@ -111,7 +110,10 @@ class FieldTemplates
     }
 
     public function render_checkbox($content, $field) {
-        return $this->render_field($field, [], 'ion-checkbox', '');
+        return "<ion-item>
+    <ion-label for='{$field['id']}'>{$field['name']}</ion-label>" .
+            $this->render_field($field, ['slot' => 'end'], 'ion-checkbox', '') .
+        "</ion-item>";
     }
 
     public function render_html($content, $field) {
