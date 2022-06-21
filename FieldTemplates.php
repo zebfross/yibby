@@ -53,11 +53,9 @@ class FieldTemplates
         ];
 
         $requiredMsg = "";
-        if (!empty($field['attributes'])) {
-            $attributes = array_merge($attributes, $props, $field['attributes']);
-            if (!empty($field['attributes']['required']))
-                $requiredMsg = "<span slot='error'>{$field['name']} is required</span>";
-        }
+        $attributes = array_merge($attributes, $props, (!empty($field['attributes']) ? $field['attributes'] : []));
+        if (!empty($field['attributes']['required']))
+            $requiredMsg = "<span slot='error'>{$field['name']} is required</span>";
 
         $startEndTag = ">";
         $endTag = "</$tag>";
