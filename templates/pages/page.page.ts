@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -9,11 +9,19 @@ import { ActivatedRoute } from '@angular/router';
 })
 export class <?= $upperName ?>Page implements OnInit {
   form: FormGroup;
+  model;
 
   constructor(private formBuilder: FormBuilder, private route: ActivatedRoute) {
     let id = this.route.snapshot.queryParams['id'];
-    let model = null;
-    this.form = this.formBuilder.group(model);
+    this.model = null;
+    this.form = this.formBuilder.group(this.model);
+
+    <?php foreach($groupFields as $field): ?>
+    this.form.setControl(
+        '<?= $field['id'] ?>',
+        this.formBuilder.array(this.model.<?= $field['id'] ?>.map((item) => this.formBuilder.group(item)))
+    );
+    <?php endforeach; ?>
   }
 
   ngOnInit() {}
@@ -24,5 +32,21 @@ export class <?= $upperName ?>Page implements OnInit {
       // this.service.save(this.form.value);
     }
   }
+
+  <?php foreach($groupFields as $field): ?>
+
+  get <?= $field['id'] ?>Controls() {
+    return this.form.controls['<?= $field['id'] ?>'] as FormArray;
+  }
+
+  add<?= ucwords($field['id']) ?>() {
+    this.<?= $field['id'] ?>Controls.push(this.formBuilder.group(new <?= ucwords($field['id']) ?>()));
+  }
+
+  delete<?= ucwords($field['id']) ?>(index: number) {
+    this.<?= $field['id'] ?>Controls.removeAt(index);
+  }
+
+  <?php endforeach; ?>
 
 }

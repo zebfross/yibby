@@ -148,13 +148,16 @@ class Yibby {
             'name' => $name,
             'upperName' => self::upperCaseName($name),
             'friendlyName' => self::friendlyName($name),
-            'fields' => ""
+            'fields_html' => "",
+            'groupFields' => []
         ];
 
         foreach($form->prop('fields') as $field) {
             if (str_contains($field['id'], '-'))
                 self::error_log("invalid field name!!! " . $field['id']);
-            $data['fields'] .= self::get_field_display($field);
+            if ($field['type'] == 'group')
+                $data['groupFields'][] = $field;
+            $data['fields_html'] .= self::get_field_display($field);
         }
 
         // generate page

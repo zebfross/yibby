@@ -47,7 +47,6 @@ class FieldTemplates
     private function render_field($field, $props, $tag, $content="") {
 
         $attributes = [
-            'id' => $field['id'],
             'formControlName' => $field['id'],
             'type' => 'text'
         ];
@@ -75,11 +74,17 @@ class FieldTemplates
     }
 
     public function render_group($content, $field) {
-        $display = "<md-input-container formGroupName='{$field['id']}'>";
+        $display = "
+    <md-input-container formArrayName='{$field['id']}'>
+        <ng-container *ngFor=\"let item of {$field["id"]}Controls.controls; let i = index\">
+          <div class='group-form-row' [formGroup]='item'>";
         foreach($field['fields'] as $subfield) {
             $display .= Yibby::get_field_display($subfield);
         }
-        $display .= '</md-input-container>';
+        $display .= '
+            </div>
+        </ng-container>
+    </md-input-container>';
         return $display;
     }
 
