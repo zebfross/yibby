@@ -14,7 +14,9 @@ License URI: https://opensource.org/licenses/gpl-2.0.php
 
 namespace Yibby;
 
-require_once __DIR__ . "/FieldTemplates.php";
+use Yibby\Api\UsersApi;
+
+require_once __DIR__ . "/vendor/autoload.php";
 
 class Yibby {
 
@@ -102,6 +104,12 @@ class Yibby {
 
             return wp_validate_auth_cookie($_GET['app_token'], 'logged_in');
         });
+
+        add_action('cmb2_admin_init', function () {
+            new SettingsManager();
+        });
+
+        new UsersApi();
     }
 
     private static function error_log($message) {
@@ -143,8 +151,6 @@ class Yibby {
         $name = $form->cmb_id;
         $inpath = 'pages/' . $template;
         $outpath = path_join($path, 'pages/' . $name . '/' . $name);
-        $componentIn = 'pages/component/' . $template;
-        $componentOut = path_join($path, 'pages/' . $name . '/form/' . $name);
 
         $data = [
             'name' => $name,

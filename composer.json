@@ -1,7 +1,7 @@
 {
   "autoload": {
     "psr-4": {
-      "Yibby\\": "/Yibby"
+      "Yibby\\": "/yibby"
     },
     "files": ["vendor/cmb2/cmb2/init.php"]
   },
