@@ -1,0 +1,25 @@
+{
+  "autoload": {
+    "psr-4": {
+      "Yibby\\": "/Yibby"
+    },
+    "files": ["vendor/cmb2/cmb2/init.php"]
+  },
+  "config": {
+    "platform-check": false
+  },
+  "name": "yibby/yibby",
+  "description": "Make great mobile apps from your Wordpress site",
+  "minimum-stability": "stable",
+  "license": "proprietary",
+  "authors": [
+    {
+      "name": "Zebfross",
+      "email": "zeb@yibby.com"
+    }
+  ],
+  "require": {
+    "kreait/firebase-php": "^6.5",
+    "cmb2/cmb2": "^2.10"
+  }
+}

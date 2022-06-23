@@ -18,6 +18,8 @@ require_once __DIR__ . "/FieldTemplates.php";
 
 class Yibby {
 
+    public static $slug = "yibby";
+
     private function get_var($name, $default = null)
     {
         if (array_key_exists($name, $_GET))
