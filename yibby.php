@@ -47,9 +47,8 @@ class Yibby {
         extract($data);
 
         ob_start();
-        $path = 'templates/' . $file;
         //if (file_exists($path))
-            include($path); // PHP will be processed
+            include($file); // PHP will be processed
         $output = ob_get_contents();
         @ob_end_clean();
         if ($return)
@@ -110,10 +109,14 @@ class Yibby {
         });
 
         new UsersApi();
+
+        add_action( 'notification/init', function() {
+            new NotificationManager();
+        } );
     }
 
-    private static function error_log($message) {
-        echo "ERROR: " . $message;
+    public static function error_log($message, $data=[]) {
+        echo "ERROR: " . $message . " " . print_r($data, true);
     }
     
     private static function friendlyName($name) {
@@ -127,7 +130,7 @@ class Yibby {
     private static function writeFile($inpath, $data, $outpath, $suffix, $overwrite=false) {
         if (!$overwrite && file_exists($outpath . $suffix))
             return;
-        $output = self::render_file($inpath . $suffix, $data, true);
+        $output = self::render_template($inpath . $suffix, $data, true);
         mkdir(dirname($outpath), 0755, true);
         file_put_contents($outpath . $suffix, $output);
     }
