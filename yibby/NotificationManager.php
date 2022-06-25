@@ -166,7 +166,8 @@ class NotificationManager extends Abstracts\Carrier {
     }
 
     public static function hasUnreadNotifications($user_id=0) {
-        return !empty(self::getNotifications(25, 0, $user_id, true));
+        $notifs = self::getNotifications(25, 0, $user_id, true);
+        return !empty($notifs) && !$notifs[0]->read;
     }
 
     /**
