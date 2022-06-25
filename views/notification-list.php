@@ -23,17 +23,13 @@
                   <span class="btn btn-light-purple btn-circle">
                     <i class="bi <?php echo $notification->icon ?>"></i>
                   </span>
-            <div class="w-75 d-inline-block v-middle ps-3">
+            <div class="notification-content d-inline-block v-middle ps-3">
                 <h5 class="message-title mb-0 mt-1 fw-bold">
                     <?php echo $notification->subject ?>
                 </h5>
                 <span class="
-                                text-nowrap
                                 d-block
-                                time
-                                text-truncate
                                 fw-normal
-                                text-muted
                                 mt-1
                               "><?php echo $notification->body ?></span>
                 <span class="
