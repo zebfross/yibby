@@ -41,6 +41,8 @@ class Yibby {
 
     private static function render_file($file, $data = [], $return = false)
     {
+        if (!str_contains($file, '.'))
+            $file .= ".php";
         if (!is_array($data))
             $data = (array)$data;
 
@@ -111,7 +113,7 @@ class Yibby {
         new UsersApi();
 
         add_action( 'notification/init', function() {
-            new NotificationManager();
+            NotificationManager::instance();
         } );
     }
 

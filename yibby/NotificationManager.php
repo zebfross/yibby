@@ -17,6 +17,7 @@ use Yibby\Api\UsersApi;
  */
 class NotificationManager extends Abstracts\Carrier {
 
+    private static $_instance = null;
     /**
      * Carrier icon, optional
      *
@@ -30,11 +31,25 @@ class NotificationManager extends Abstracts\Carrier {
     /**
      * Carrier constructor
      */
-    public function __construct() {
+    private function __construct() {
         // Provide the slug and translatable name.
         parent::__construct( 'yibby-push', __( 'Yibby Push Notifications', 'textdomain' ) );
 
         add_shortcode('yibby_notification_list', array(&$this, 'notification_list'));
+    }
+
+    public static function instance() {
+        if (empty(self::$_instance))
+            self::$_instance = new self();
+
+        return self::$_instance;
+    }
+
+    public function notification_list_friendly($limit=25, $skip=0, $ifEmpty="") {
+        return $this->notification_list([
+            'limit' => $limit,
+            'skip' => $skip
+        ], $ifEmpty);
     }
 
     public function notification_list($atts, $content="") {
@@ -45,11 +60,11 @@ class NotificationManager extends Abstracts\Carrier {
 
         $atts = shortcode_atts($defaults, $atts, "yibby_notification_list");
 
-        $notifications = NotificationManager::getNotifications($atts['limit'], $atts['skip'], get_current_user_id());
+        $notifications = self::getNotifications($atts['limit'], $atts['skip'], get_current_user_id());
 
         if (empty($notifications) && !empty($content))
             return $content;
-        return self::render_view('notification-list', ['notifications' => $notifications], true);
+        return Yibby::render_view('notification-list', ['notifications' => $notifications], true);
     }
 
     /**
@@ -89,14 +104,11 @@ class NotificationManager extends Abstracts\Carrier {
 
         // This is where you should connect with your service to send out the Notifiation.
 
-        /*wp_insert_comment([
-            'comment_content' => $data['message'],
-            'comment_post_ID' => $data['post_id'],
-            'comment_type' => "yibby-notification",
-            'user_id' => $data['parsed_recipients']
-        ]);*/
+        $notif = \Yibby\Models\Notification::fromCarrier($this);
 
-        $this->sendPush($data['message'], "", $data['parsed_recipients']);
+        wp_insert_comment($notif->asDatabaseEntry());
+
+        $this->sendPush($notif->subject, $notif->body, $data['parsed_recipients']);
     }
 
 
@@ -153,34 +165,52 @@ class NotificationManager extends Abstracts\Carrier {
         }
     }
 
+    public static function hasUnreadNotifications($user_id=0) {
+        return !empty(self::getNotifications(25, 0, $user_id, true));
+    }
+
+    /**
+     * @param int $limit
+     * @param int $page
+     * @param int $user_id
+     * @param false $disableLastReadUpdate
+     * @return \Yibby\Models\Notification[]
+     */
     public static function getNotifications($limit=25, $page=0, $user_id=0, $disableLastReadUpdate=false) {
         if (empty($user_id))
             $user_id = get_current_user_id();
 
-        //set the arguments
-        $args = array(
-            'orderby' => 'date',
-            'status' => 'approve',
-            'order' => 'DESC',
-            'comment_type' => 'yibby-notification',
-            'posts_per_page' => $limit,
-            'offset' => $page
-        );
-        // get the comments using the arguments
-        $comments = get_comments($args);
+        $cache_key = 'notifications-' . $limit . '-' . $page . '-' . $user_id;
+        $cached = wp_cache_get($cache_key);
+        if (empty($cached)) {
 
-        $last_read = self::getLastReadTime($user_id);
-        if (!$disableLastReadUpdate && $page == 0) {
-            self::updateLastReadTime($user_id);
+            //set the arguments
+            $args = array(
+                'orderby' => 'date',
+                'status' => 'approve',
+                'order' => 'DESC',
+                'type' => 'yibby-notification',
+                'posts_per_page' => $limit,
+                'offset' => $page,
+                'user_id' => $user_id
+            );
+            // get the comments using the arguments
+            $comments = get_comments($args);
+
+            $last_read = self::getLastReadTime($user_id);
+            if (!$disableLastReadUpdate && $page == 0) {
+                //self::updateLastReadTime($user_id);
+            }
+
+            $cached = [];
+            foreach ($comments as $notification) {
+                $cached[] = \Yibby\Models\Notification::fromComment($notification, $last_read);
+            }
+
+            wp_cache_set($cache_key, $cached);
         }
 
-        foreach($comments as $notification) {
-            assert($notification instanceof \WP_Comment);
-            if (new \DateTime($notification->comment_date) > $last_read)
-                $notification->comment_approved = false;
-        }
-
-        return $comments;
+        return $cached;
     }
 
     public static function getLastReadTime($user_id) {
