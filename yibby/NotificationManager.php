@@ -36,7 +36,7 @@ class NotificationManager extends Abstracts\Carrier {
      */
     private function __construct() {
         // Provide the slug and translatable name.
-        parent::__construct( $this->$slug, __( 'Yibby Push Notifications', 'textdomain' ) );
+        parent::__construct( $this->slug, __( 'Yibby Push Notifications', 'textdomain' ) );
 
         add_shortcode('yibby_notification_list', array(&$this, 'notification_list'));
     }
@@ -44,11 +44,14 @@ class NotificationManager extends Abstracts\Carrier {
     public static function instance() {
         if (empty(self::$_instance)) {
             self::$_instance = new self();
-            Register::carrier(self::$_instance);
-            Register::recipient(self::$_instance->slug, new PushRecipient());
         }
 
         return self::$_instance;
+    }
+
+    public static function register() {
+        Register::carrier(self::instance());
+        Register::recipient(self::instance()->slug, new PushRecipient());
     }
 
     public function notification_list_friendly($limit=25, $skip=0, $ifEmpty="") {

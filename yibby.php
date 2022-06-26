@@ -113,7 +113,7 @@ class Yibby {
         new UsersApi();
 
         add_action( 'notification/init', function() {
-            NotificationManager::instance();
+            NotificationManager::register();
         } );
     }
 

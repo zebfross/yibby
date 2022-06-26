@@ -22,9 +22,11 @@ if (!empty($notification->link)) {
             <div class="read-status <?php echo $notification->read ? 'read' : 'unread' ?>">
 
             </div>
+            <?php if (!empty($notification->icon)): ?>
                   <span class="btn <?php echo $notification->color ?> btn-circle">
                     <i class="bi <?php echo $notification->icon ?>"></i>
                   </span>
+          <?php endif; ?>
             <div class="notification-content d-inline-block v-middle ps-3">
                 <span class="
                                 d-block
