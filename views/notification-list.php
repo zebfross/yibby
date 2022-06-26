@@ -7,26 +7,25 @@
 <?php
     foreach($notifications as $notification):
         assert($notification instanceof \Yibby\Models\Notification);
-?>
-
-        <a href="javascript:void(0)" class="
-                            message-item
+    $classes = "message-item
                             d-flex
                             align-items-center
                             border-bottom
                             px-3
-                            py-2
-                          ">
+                            py-2";
+    $tag = "div";
+if (!empty($notification->link)) {
+    $tag = "a";
+}
+?>
+        <<?php echo $tag ?> href="<?php echo $notification->link ?>" class="<?php echo $classes ?>">
             <div class="read-status <?php echo $notification->read ? 'read' : 'unread' ?>">
 
             </div>
-                  <span class="btn btn-light-purple btn-circle">
+                  <span class="btn <?php echo $notification->color ?> btn-circle">
                     <i class="bi <?php echo $notification->icon ?>"></i>
                   </span>
             <div class="notification-content d-inline-block v-middle ps-3">
-                <h5 class="message-title mb-0 mt-1 fw-bold">
-                    <?php echo $notification->subject ?>
-                </h5>
                 <span class="
                                 d-block
                                 fw-normal
@@ -39,7 +38,7 @@
                                 text-muted
                               "><?php echo $notification->friendly_date() ?> ago</span>
             </div>
-        </a>
+        </<?php echo $tag ?>>
     <?php
     endforeach;
     ?>

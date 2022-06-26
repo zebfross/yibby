@@ -4,10 +4,10 @@ namespace Yibby\Api;
 
 use Kreait\Firebase\Factory;
 use Yibby\NotificationManager;
+use Yibby\Yibby;
 
 class UsersApi extends BaseApi
 {
-    public static $key = "yibby_push_notification_tokens";
 
     public function registerPushNotifications(\WP_REST_Request $request) {
         if (!is_user_logged_in()) {
@@ -18,7 +18,7 @@ class UsersApi extends BaseApi
         if (!$token)
             $token = $request->get_param('push_token');
         if (!$token) {
-            log_info("invalid token");
+            Yibby::error_log("invalid token");
             return $this->error_malformed("Invalid token");
         }
 
