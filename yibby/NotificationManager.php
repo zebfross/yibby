@@ -62,7 +62,7 @@ class NotificationManager extends Abstracts\Carrier {
     }
 
     public function hasUserIdOptedOut($notification_hash, $user_id) {
-        if (isSettingDisabled($user_id, $notification_hash)) {
+        if ($this->isSettingDisabled($user_id, $notification_hash)) {
             return true;
         }
 
