@@ -3,6 +3,7 @@
 namespace Yibby;
 
 use BracketSpace\Notification\Register;
+use BracketSpace\Notification\Store\Carrier;
 use Kreait\Firebase\Exception\FirebaseException;
 use Kreait\Firebase\Exception\MessagingException;
 use Kreait\Firebase\Messaging\CloudMessage;
@@ -39,6 +40,59 @@ class NotificationManager extends Abstracts\Carrier {
         parent::__construct( $this->slug, __( 'Yibby Push Notifications', 'textdomain' ) );
 
         add_shortcode('yibby_notification_list', array(&$this, 'notification_list'));
+
+        // suppress notifications if user opted out
+        add_action( 'notification/carrier/pre-send', array($this, 'suppress_notifications'), 10, 3 );
+
+    }
+    
+    public function hasUserEmailOptedOut($notification_hash, $email) {
+        $user = get_user_by_email($email);
+        if ($this->isSettingDisabled($user->ID, 'email_notifications_enabled')) {
+            return true;
+        }
+        return $this->hasUserIdOptedOut($notification_hash . "_email_enabled", $user->ID);
+    }
+
+    public function hasUserOptedOutOfPush($notification_hash, $user_id) {
+        if ($this->isSettingDisabled($user_id, 'push_notifications_enabled')) {
+            return true;
+        }
+        return $this->hasUserIdOptedOut($notification_hash . "_push_enabled", $user_id);
+    }
+
+    public function hasUserIdOptedOut($notification_hash, $user_id) {
+        if (isSettingDisabled($user_id, $notification_hash)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function isSettingDisabled($user_id, $setting) {
+        $setting = get_user_meta($user_id, $setting, true);
+        if ($setting == "0") {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @param $carrier Abstracts\Carrier
+     * @param $trigger Abstracts\Trigger
+     * @param $notification \BracketSpace\Notification\Core\Notification
+     */
+    public function suppress_notifications( $carrier, $trigger, $notification ) {
+        if (empty($carrier->data['parsed_recipients'])) {
+            return;
+        }
+        if ( $carrier->get_slug() == 'email' ) {
+            if ($this->hasUserEmailOptedOut($notification->get_hash(), reset($carrier->data['parsed_recipients'])))
+                $carrier->suppress();
+        } else if ($carrier->get_slug() == 'yibby-push' && isset($trigger->author_id)) {
+            if ($this->hasUserOptedOutOfPush($notification->get_hash(), $trigger->author_id))
+                $carrier->suppress();
+        }
     }
 
     public static function instance() {
@@ -136,7 +190,7 @@ class NotificationManager extends Abstracts\Carrier {
         // Special field which renders all Carrier's recipients.
         // You may override name, slug and description here.
         $this->add_recipients_field( [
-            'name' => 'Recipients',
+            'name' => 'recipients',
             'slug' => 'recipients',
         ] );
 
@@ -153,7 +207,7 @@ class NotificationManager extends Abstracts\Carrier {
         $data = $this->data;
 
         // Parsed recipients are also available.
-        $recipients = $data['parsed_Recipients'];
+        $recipients = $data['parsed_recipients'];
 
         foreach($recipients as $recipient) {
             if ($recipient == "author" && isset($trigger->author_id)) {
