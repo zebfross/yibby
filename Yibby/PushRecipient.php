@@ -51,8 +51,8 @@ class PushRecipient extends Abstracts\Recipient {
 
         // You should build an array of options here if you are using SelectField field.
         $opts = [
-            'admin' => __( 'Administrator', 'textdomain' ),
             'author' => __( 'Post Author', 'textdomain' ),
+            'admin' => __( 'Administrator', 'textdomain' ),
         ];
 
         // You can use other fields as well.

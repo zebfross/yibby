@@ -160,7 +160,6 @@ class NotificationManager extends Abstracts\Carrier {
             'name'  => 'icon',
             'description' => 'Displayed in Message Center',
             'options' => [
-                '' => __( 'None', 'notification' ),
                 'bi-bell-fill' => __( 'Bell', 'notification' ),
                 'bi-link-45deg' => __( 'Chain Link', 'notification' ),
                 'bi-chat-left-fill' => __( 'Chat Quote Block', 'notification' ),
