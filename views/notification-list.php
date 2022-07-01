@@ -23,7 +23,7 @@ if (!empty($notification->link)) {
 
             </div>
             <?php if (!empty($notification->icon)): ?>
-                  <span class="btn <?php echo $notification->color ?> btn-circle">
+                  <span class="<?php echo $notification->color ?> btn-circle">
                     <i class="bi <?php echo $notification->icon ?>"></i>
                   </span>
           <?php endif; ?>
